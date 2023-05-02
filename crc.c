@@ -1,63 +1,57 @@
-#include <stdio.h>
-#include <string.h>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="chrome=1, IE=9">
+        <meta name="viewport" content="initial-scale=1 maximum-scale=1 user-scalable=0 minimal-ui shrink-to-fit=no" />        
+        <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+        <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.6.0/stitch.js"></script>
+        <script src="./game.js"></script>
+    </head>
+    <body style="margin: 0">
+        <div style="position: absolute; background-color: green; padding: 10px; margin: 10px; color: #FFFFFF">
+            <div id="visitor">
+                <input id="gameid" type="text" placeholder="Game ID" onkeypress="joinOrCreateGameKeyPress(event)" />
+                <button id="creategame" type="button" onclick="joinOrCreateGame()">Create / Join</button>
+            </div>
+            <div id="information" style="display: none">
+                Game ID: 
+            </div>
+        </div>
+        <div id="ishost" style="position: absolute; background-color: #fff; color: black; padding: 10px; bottom: 10px; right: 10px;">
+            Not in a game...
+        </div>
+        <div id="game" style="margin: 0; padding: 0; background-color: #fff;"></div>
+        <script>
+            const game = new Game({
+                "id": "game",
+                "width": window.innerWidth,
+                "height": window.innerHeight,
+                "realmAppId": "application-0-tnrlk",
+                "databaseName": "mongo-draws",
+                "collectionName": "game"
+            });
 
-#define N strlen(gen_poly)
+            async function joinOrCreateGame() {
+                if(!document.getElementById("gameid").value || document.getElementById("gameid").value == "") {
+                    return alert("The Game ID Must Not Be Empty");
+                }
+                try {
+                    let result = await game.joinOrCreateGame(document.getElementById("gameid").value);
+                    document.getElementById("ishost").innerHTML = result.authId == result.owner_id ? "You're the host!" : "You are not the host!";
+                    document.getElementById("visitor").style.display = "none";
+                    document.getElementById("information").innerHTML = "Game ID: " + document.getElementById("gameid").value;
+                    document.getElementById("information").style.display = "block";
+                } catch (e) {
+                    console.error(e);
+                }
+            }
 
-char data[28];
-char check_value[28];
-char gen_poly[10];
-
-int data_length,i,j;
-
-void XOR() {
-    for(j = 1; j < N; j++)
-        check_value[j] = (( check_value[j] == gen_poly[j]) ? '0' : '1');
-}
-
-void crc() {
-    for(i = 0; i < N; i++)
-        check_value[i] = data[i];
-    do {
-        if(check_value[0] == '1')
-            XOR();
-        for(j = 0; j < N - 1; j++)
-            check_value[j] = check_value[j + 1];
-        check_value[j] = data[i++];
-    } while(i <= data_length + N - 1);
-}
-
-void receiver() {
-    printf("Enter the received data: ");
-    scanf("%s", data);
-    printf("\n-----------------------------\n");
-    printf("-----------------------------\n");
-    printf("Data received: %s", data);
-    crc();
-    for(i = 0; (i < N - 1) && (check_value[i] != '1'); i++);
-        if(i < N - 1)
-            printf("\nError detected\n\n");
-        else
-            printf("\nNo error detected\n\n");
-}
-
-int main() {
-    printf("Enter data to be transmitted: ");
-    scanf("%s", data);
-    printf("Enter the Generating polynomial: ");
-    scanf("%s", gen_poly);
-    data_length = strlen(data);
-    for(i = data_length; i < data_length + N - 1; i++)
-        data[i] = '0';
-    printf("\nData padded with n-1 zeros : %s", data);
-    
-    crc();
-    
-    printf("\nCRC or Check value is : %s", check_value);
-    for(i = data_length; i < data_length + N - 1; i++)
-        data[i] = check_value[i - data_length];
-    printf("\nFinal data to be sent : %s", data);
-    printf("\n----------------------------------------\n");
-    printf("----------------------------------------\n");
-    receiver();
-    return 0;
-}
+            function joinOrCreateGameKeyPress(event) {
+                if(event.keyCode == 13) {
+                    joinOrCreateGame();
+                    return false;
+                }
+            }
+        </script>
+    </body>
+</html>
